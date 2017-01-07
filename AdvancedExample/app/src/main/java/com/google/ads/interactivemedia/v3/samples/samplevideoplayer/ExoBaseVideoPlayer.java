@@ -88,13 +88,13 @@ public class ExoBaseVideoPlayer extends Fragment implements OnClickListener, Exo
     public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
     public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
 
-    // TODO replace this with a S1 version
-    public static final String ACTION_VIEW = "com.google.android.exoplayer.demo.action.VIEW";
+    // TODO make this variable from the BuildConfig
+    public static final String ACTION_VIEW = "nl.streamone.mobile.android.demo.action.VIEW";
     public static final String EXTENSION_EXTRA = "extension";
 
-    // TODO replace this with a S1 version
+    // TODO make this variable from the BuildConfig
     public static final String ACTION_VIEW_LIST =
-            "com.google.android.exoplayer.demo.action.VIEW_LIST";
+            "nl.streamone.mobile.android.demo.action.VIEW_LIST";
     public static final String URI_EXTRA = "uri_list";
     public static final String URI_LIST_EXTRA = "uri_list";
     public static final String EXTENSION_LIST_EXTRA = "extension_list";
@@ -104,6 +104,8 @@ public class ExoBaseVideoPlayer extends Fragment implements OnClickListener, Exo
 
     static {
         DEFAULT_COOKIE_MANAGER = new CookieManager();
+
+        // TODO BuildConfig option?
         DEFAULT_COOKIE_MANAGER.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
     }
 
@@ -130,6 +132,39 @@ public class ExoBaseVideoPlayer extends Fragment implements OnClickListener, Exo
 
     // Activity lifecycle
 
+    /**
+     *
+     * Convenience function to launch player from an intent action
+     * Although the
+     *
+     * @param intent
+     * @return
+     */
+    public Fragment newInstance(Intent intent) {
+        ExoBaseVideoPlayer instance = new ExoBaseVideoPlayer();
+        Bundle args = intent.getExtras();
+        String action = intent.getAction();
+        if (ACTION_VIEW.equalsIgnoreCase(action)) {
+            args.putParcelable(URI_EXTRA, (Uri) intent.getData());
+        }else if (ACTION_VIEW_LIST.equalsIgnoreCase(action)) {
+            // ignore the next line, everything required for this is in the Bundle
+            //args.putStringArray(URI_LIST_EXTRA, );
+        }else {
+            // TODO put in res/strings.xml
+            throw new IllegalArgumentException("Missing URI and/or extension to autoplay");
+        }
+        instance.setArguments(args);
+        return instance;
+    }
+
+    public Fragment newInstance(Uri uri, String extension) {
+        ExoBaseVideoPlayer fragment = new ExoBaseVideoPlayer();
+        Bundle args = new Bundle();
+        args.putParcelable(URI_EXTRA, uri);
+        args.putString(EXTENSION_EXTRA, extension);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Override
     public void onAttach(Context context) {
@@ -138,6 +173,7 @@ public class ExoBaseVideoPlayer extends Fragment implements OnClickListener, Exo
         try {
             application = (MainApplication) getActivity().getApplication(); // TODO make this an interface
         }catch (ClassCastException ex) {
+            throw new RuntimeException(ex);
             // showToast(...); // TODO replace with proper error handling
         }
     }
