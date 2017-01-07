@@ -1,6 +1,7 @@
 package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -31,7 +32,7 @@ public class VideoFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
+    public void onAttach(Context activity) {
         try {
             mViewCreatedCallback = (OnVideoFragmentViewCreatedListener) activity;
         } catch (ClassCastException e) {
