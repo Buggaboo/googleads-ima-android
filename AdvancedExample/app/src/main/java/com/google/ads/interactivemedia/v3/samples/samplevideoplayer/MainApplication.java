@@ -1,6 +1,8 @@
 package com.google.ads.interactivemedia.v3.samples.samplevideoplayer;
 
 import android.app.Application;
+
+import com.google.ads.interactivemedia.v3.samples.videoplayerapp.BuildConfig;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -15,12 +17,17 @@ import com.google.android.exoplayer2.util.Util;
  */
 public class MainApplication extends Application {
 
-    protected String userAgent;
+    public static MainApplication instance;
+
+    private String userAgent;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        // TODO use BuildConfig
         userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
+
+        instance  = this; // hack
     }
 
     public DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
@@ -33,7 +40,7 @@ public class MainApplication extends Application {
     }
 
     public boolean useExtensionRenderers() {
-        return false; /*BuildConfig.FLAVOR.equals("withExtensions"); */
+        return BuildConfig.FLAVOR.equals("withExtensions");
     }
 
 }

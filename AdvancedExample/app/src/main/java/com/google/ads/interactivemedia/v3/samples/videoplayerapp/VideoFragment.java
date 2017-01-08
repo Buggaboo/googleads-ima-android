@@ -28,7 +28,7 @@ public class VideoFragment extends Fragment {
      * Listener called when the fragment's onCreateView is fired.
      */
     public interface OnVideoFragmentViewCreatedListener {
-        public void onVideoFragmentViewCreated();
+        void onVideoFragmentViewCreated();
     }
 
     @Override

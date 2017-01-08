@@ -3,6 +3,7 @@
 package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -191,6 +192,7 @@ public class VideoPlayerController {
 
     private void log(String message) {
         if (mLog != null) {
+            // TODO replace with Timber
             mLog.log(message + "\n");
         }
     }
@@ -222,7 +224,7 @@ public class VideoPlayerController {
      * Request and subsequently play video ads from the ad server.
      */
     public void requestAndPlayAds() {
-        if (mCurrentAdTagUrl == null || mCurrentAdTagUrl == "") {
+        if (TextUtils.isEmpty(mCurrentAdTagUrl)) {
             log("No VAST ad tag URL specified");
             resumeContent();
             return;

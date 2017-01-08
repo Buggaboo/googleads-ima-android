@@ -24,6 +24,11 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"/>
 
+  <!-- TODO setup progress for the player, and remaining time, nothing more -->
+  <!--<com.google.android.exoplayer2.ui.SimpleExoPlayerView android:id="@+id/adplayer_view"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>-->
+
   <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
