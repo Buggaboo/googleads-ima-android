@@ -88,6 +88,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
             @Override
             public void playAd() {
                 mIsAdDisplayed = true;
+                mVideoPlayer.disablePlaybackControls();
                 mVideoPlayer.play();
             }
 

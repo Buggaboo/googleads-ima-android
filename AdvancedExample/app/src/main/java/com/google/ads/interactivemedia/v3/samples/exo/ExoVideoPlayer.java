@@ -1,26 +1,22 @@
-package com.google.ads.interactivemedia.v3.samples.samplevideoplayer;
+package com.google.ads.interactivemedia.v3.samples.exo;
 
-import android.app.Fragment;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
+import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.ads.interactivemedia.v3.samples.exo.TrackSelectionHelper;
+import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.MainApplication;
+import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.SampleVideoPlayer;
+import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
 import com.google.ads.interactivemedia.v3.samples.videoplayerapp.R;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -36,8 +32,8 @@ import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.StreamingDrmSessionManager;
 import com.google.android.exoplayer2.drm.UnsupportedDrmException;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
-import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
+import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer;
+import com.google.android.exoplayer2.mediacodec.MediaCodecUtil;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
@@ -49,7 +45,7 @@ import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource
 import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.MappingTrackSelector.MappedTrackInfo;
+import com.google.android.exoplayer2.trackselection.MappingTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.DebugTextViewHelper;
@@ -63,135 +59,91 @@ import com.google.android.exoplayer2.util.Util;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.google.ads.interactivemedia.v3.samples.exo.EventLogger;
-
 /**
- * Created by jasmsison on 07/01/17.
- * <p>
- * A fragment that plays media using {@link SimpleExoPlayer}.
+ * Created by jasmsison on 09/01/17.
  */
 
-@RequiresApi(api = Build.VERSION_CODES.HONEYCOMB)
-public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListener, ExoPlayer.EventListener,
+public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnClickListener, ExoPlayer.EventListener,
         PlaybackControlView.VisibilityListener {
 
+    // constants
     public static final String DRM_SCHEME_UUID_EXTRA = "drm_scheme_uuid";
     public static final String DRM_LICENSE_URL = "drm_license_url";
     public static final String DRM_KEY_REQUEST_PROPERTIES = "drm_key_request_properties";
     public static final String PREFER_EXTENSION_DECODERS = "prefer_extension_decoders";
-
-    // TODO make this variable from the BuildConfig
-    public static final String ACTION_VIEW = "nl.streamone.mobile.android.demo.action.VIEW";
-    // TODO make this variable from the BuildConfig
-    public static final String ACTION_VIEW_LIST =
-            "nl.streamone.mobile.android.demo.action.VIEW_LIST";
 
     public static final String URI_EXTRA = "uri";
     public static final String EXTENSION_EXTRA = "extension";
     public static final String URI_LIST_EXTRA = "uri_list";
     public static final String EXTENSION_LIST_EXTRA = "extension_list";
 
-    protected static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
-    protected static final CookieManager DEFAULT_COOKIE_MANAGER;
+    // persist
+    private static Bundle sArgs = null;
 
+    // builder params
+    private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private static final CookieManager DEFAULT_COOKIE_MANAGER;
     static {
         DEFAULT_COOKIE_MANAGER = new CookieManager();
-
-        // TODO BuildConfig option?
         DEFAULT_COOKIE_MANAGER.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
     }
 
-    protected Handler mainHandler;
-    protected Timeline.Window window;
-    protected EventLogger eventLogger;
-    protected LinearLayout debugRootView;
-    protected TextView debugTextView;
-    protected Button retryButton;
-    protected DataSource.Factory mediaDataSourceFactory;
+    public ExoVideoPlayer(Context context) {
+        super(context);
+        init(context);
+    }
 
-    protected DefaultTrackSelector trackSelector;
-    protected TrackSelectionHelper trackSelectionHelper;
-    protected DebugTextViewHelper debugViewHelper;
-    protected boolean playerNeedsSource;
-    protected boolean shouldAutoPlay;
+    public ExoVideoPlayer(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        init(context);
+    }
 
-    protected boolean isTimelineStatic;
-    protected int playerWindow;
-    protected long playerPosition;
+    public ExoVideoPlayer(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        init(context);
+    }
+
+    private Handler mainHandler;
+    private Timeline.Window window;
+    private EventLogger eventLogger;
+    private LinearLayout debugRootView;
+    private TextView debugTextView;
+    private Button retryButton;
+    private DataSource.Factory mediaDataSourceFactory;
+
+    private DefaultTrackSelector trackSelector;
+    private TrackSelectionHelper trackSelectionHelper;
+    private DebugTextViewHelper debugViewHelper;
+    private boolean playerNeedsSource;
+    private boolean shouldAutoPlay;
+
+    private boolean isTimelineStatic;
+    private int playerWindow;
+    private long playerPosition;
     private MainApplication application;
 
-    protected SimpleExoPlayerView playerView;
+    private SimpleExoPlayerView playerView;
+    private SimpleExoPlayer player;
 
-    protected SimpleExoPlayer player;
 
-    // Activity lifecycle
+    private PlaybackState mPlaybackState;
+    private final List<PlayerCallback> mVideoPlayerCallbacks = new ArrayList<PlayerCallback>(1);
 
-    /**
-     *
-     * Convenience function to launch player from an intent action
-     * Although the
-     *
-     * @param intent
-     * @return
-     */
-    public Fragment newInstance(Intent intent) {
-        ExoBaseVideoPlayerFragment instance = new ExoBaseVideoPlayerFragment();
-        Bundle args = intent.getExtras();
-        String action = intent.getAction();
-        if (ACTION_VIEW.equalsIgnoreCase(action)) {
-            args.putParcelable(URI_EXTRA, (Uri) intent.getData());
-        }else if (ACTION_VIEW_LIST.equalsIgnoreCase(action)) {
-            // ignore the next line, everything required for this is in the Bundle
-            //args.putStringArray(URI_LIST_EXTRA, );
-        }else {
-            // TODO put in res/strings.xml
-            throw new IllegalArgumentException("Missing URI and/or extension to autoplay");
-        }
-        instance.setArguments(args);
-        return instance;
-    }
+    private void init(Context context) {
+        mPlaybackState = PlaybackState.STOPPED;
+        setKeepScreenOn(true);
 
-    public Fragment newInstance(Uri uri, String extension) {
-        ExoBaseVideoPlayerFragment fragment = new ExoBaseVideoPlayerFragment();
-        Bundle args = new Bundle();
-        args.putParcelable(URI_EXTRA, uri);
-        args.putString(EXTENSION_EXTRA, extension);
-        fragment.setArguments(args);
-        return fragment;
-    }
+        application = MainApplication.instance;
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        // TODO provide ExoBuilder, not necessarily via this route
-        try {
-            application = (MainApplication) getActivity().getApplication(); // TODO make this an interface
-        }catch (ClassCastException ex) {
-            throw new RuntimeException(ex);
-            // showToast(...); // TODO replace with proper error handling
-        }
-    }
+        android.view.LayoutInflater.from(context).inflate(R.layout.exo_player_merge, this, true);
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.player_fragment, container, false);
-
-        return rootView;
-    }
-
-    @Override
-    public void onViewCreated(View rootView, Bundle savedInstanceState) {
-        super.onViewCreated(rootView, savedInstanceState);
-        setupPlayer(rootView);
-    }
-
-    private void setupPlayer(View rootView) {
         shouldAutoPlay = true;
         mediaDataSourceFactory = buildDataSourceFactory(true);
         mainHandler = new Handler();
@@ -200,120 +152,217 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
             CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER);
         }
 
-        rootView.setOnClickListener(this);
-        debugRootView = (LinearLayout) rootView.findViewById(R.id.controls_root);
-        debugTextView = (TextView) rootView.findViewById(R.id.debug_text_view);
-        retryButton = (Button) rootView.findViewById(R.id.retry_button);
+        this.setOnClickListener(this);
+        debugRootView = (LinearLayout) findViewById(R.id.controls_root);
+        debugTextView = (TextView) findViewById(R.id.debug_text_view);
+        retryButton = (Button) findViewById(R.id.retry_button);
         retryButton.setOnClickListener(this);
 
-        playerView = (SimpleExoPlayerView) rootView.findViewById(R.id.player_view);
+        playerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
 
         playerView.setControllerVisibilityListener(this);
         playerView.requestFocus();
     }
 
 
-    // TODO force the Activity to implement this
-    /*
-    @Override
-    public void onNewIntent(Intent intent) {
-        releasePlayer();
-        isTimelineStatic = false;
-        setIntent(intent);
-    }
-    */
+    //enablePlaybackControls(); // TODO necessary?
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        releasePlayer();
-        isTimelineStatic = false;
-    }
+    // Set OnCompletionListener to notify our callbacks when the video is completed.
+    // TODO you need onLoadCompletion, it's already in the EventLogger
+        /*
+        super.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (Util.SDK_INT > 23) {
-            initializePlayer();
-        }
-    }
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                // Reset the MediaPlayer.
+                // This prevents a race condition which occasionally results in the media
+                // player crashing when switching between videos.
+                disablePlaybackControls();
+                mediaPlayer.reset();
+                mediaPlayer.setDisplay(getHolder());
+                enablePlaybackControls();
+                mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if ((Util.SDK_INT <= 23 || player == null)) {
-            initializePlayer();
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (Util.SDK_INT <= 23) {
-            releasePlayer();
-        }
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        if (Util.SDK_INT > 23) {
-            releasePlayer();
-        }
-    }
-
-    // TODO force activity to implement this
-    /*
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
-        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            initializePlayer();
-        } else {
-            showToast(R.string.storage_permission_denied);
-            finish();
-        }
-    }
-    */
-
-    // TODO force Activity/View to implement this
-    // Activity input
-    /*
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        // Show the controls on any key event.
-        playerView.showController();
-        // If the event was not handled then see if the player view can handle it as a media key event.
-        return super.dispatchKeyEvent(event) || playerView.dispatchMediaKeyEvent(event);
-    }
-    */
-
-    // OnClickListener methods
-
-    @Override
-    public void onClick(View view) {
-        if (view == retryButton) {
-            initializePlayer();
-        } else if (view.getParent() == debugRootView) {
-            MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
-            if (mappedTrackInfo != null) {
-                trackSelectionHelper.showSelectionDialog(getActivity(), ((Button) view).getText(),
-                        trackSelector.getCurrentMappedTrackInfo(), (int) view.getTag());
+                for (PlayerCallback callback : mVideoPlayerCallbacks) {
+                    callback.onCompleted();
+                }
             }
+        });
+        */
+
+    // TODO you need onPlayerError, it's already in the EventLogger
+    // Set OnErrorListener to notify our callbacks if the video errors.
+        /*
+        super.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
+                for (PlayerCallback callback : mVideoPlayerCallbacks) {
+                    callback.onError();
+                }
+
+                // Returning true signals to MediaPlayer that we handled the error. This will
+                // prevent the completion handler from being called.
+                return true;
+            }
+        });
+        }
+        */
+
+    @Override
+    public int getCurrentPosition() {
+        return (int) player.getCurrentPosition();
+    }
+
+    @Override
+    public void seekTo(int videoPosition) {
+        Log.d("ExoVideoPlayer2", "Using the player, bundle set? -> " + String.valueOf(sArgs != null));
+        player.seekTo(videoPosition);
+    }
+
+    @Override
+    public void setVideoPath(String videoUrl) {
+        Log.d("ExoVideoPlayer2", "setVideoPath");
+        if (sArgs != null) {
+            releasePlayer();
+        }
+        initializePlayer(videoUrl);
+    }
+
+    @Override
+    public int getDuration() {
+        return mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED ? 0 : (int) player.getDuration();
+    }
+
+    /*
+    @Override
+    public void setOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
+        // The OnCompletionListener can only be implemented by SampleVideoPlayer.
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setOnErrorListener(MediaPlayer.OnErrorListener listener) {
+        // The OnErrorListener can only be implemented by SampleVideoPlayer.
+        throw new UnsupportedOperationException();
+    }
+*/
+
+    // Methods implementing the VideoPlayer interface.
+    @Override
+    public void play() {
+        start();
+    }
+
+    public void start() {
+        player.setPlayWhenReady(shouldAutoPlay);
+        switch (mPlaybackState) {
+            case STOPPED:
+                for (PlayerCallback callback : mVideoPlayerCallbacks) {
+                    callback.onPlay();
+                }
+                break;
+            case PAUSED:
+                for (PlayerCallback callback : mVideoPlayerCallbacks) {
+                    callback.onResume();
+                }
+                break;
+            default:
+                // Already playing; do nothing.
+                break;
+        }
+        mPlaybackState = SampleVideoPlayer.PlaybackState.PLAYING;
+    }
+
+    @Override
+    public void pause() {
+        // TODO stop
+        mPlaybackState = SampleVideoPlayer.PlaybackState.PAUSED;
+        for (PlayerCallback callback : mVideoPlayerCallbacks) {
+            callback.onPause();
         }
     }
 
-    // PlaybackControlView.VisibilityListener implementation
     @Override
-    public void onVisibilityChange(int visibility) {
-        debugRootView.setVisibility(visibility);
+    public void stopPlayback() {
+        if (mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED) {
+            return;
+        }
+        // TODO stop and tear down
+        mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
     }
 
-    // Internal methods
+    @Override
+    public void disablePlaybackControls() {
+        playerView.hideController();
+    }
 
-    protected void initializePlayer() {
-        Bundle args = getArguments();
-        Set<String> bundleKeySet = getArguments().keySet();
+    @Override
+    public void enablePlaybackControls() {
+        playerView.showController();
+        showControls();
+    }
+
+    @Override
+    public void addPlayerCallback(PlayerCallback callback) {
+        mVideoPlayerCallbacks.add(callback);
+    }
+
+    @Override
+    public void removePlayerCallback(PlayerCallback callback) {
+        mVideoPlayerCallbacks.remove(callback);
+    }
+
+    // clean up
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        releasePlayer();
+    }
+
+    /**
+     * Specific to ExoPlayer
+     */
+
+
+    public void releasePlayer() {
+        if (player != null) {
+            debugViewHelper.stop();
+            debugViewHelper = null;
+            shouldAutoPlay = player.getPlayWhenReady();
+            playerWindow = player.getCurrentWindowIndex();
+            playerPosition = C.TIME_UNSET;
+            Timeline timeline = player.getCurrentTimeline();
+            if (!timeline.isEmpty() && timeline.getWindow(playerWindow, window).isSeekable) {
+                playerPosition = player.getCurrentPosition();
+            }
+
+            Log.d("ExoVideoPlayer2", "Releasing the player");
+            player.release();
+            player = null;
+            trackSelector = null;
+            trackSelectionHelper = null;
+            eventLogger = null;
+        }
+    }
+
+    public void initializePlayer(String url) {
+        Bundle args = new Bundle();
+        args.putParcelable(URI_EXTRA, Uri.parse(url));
+        initializePlayer(args);
+    }
+
+    public void initializePlayer(Bundle args) {
+        if (args == null) {
+            throw new IllegalArgumentException("No video Uri provided");
+        }
+        sArgs = args;
+        Set<String> bundleKeySet = args.keySet();
+
+        // TODO remove debug, reasoning
+        if (player != null) throw new IllegalArgumentException();
+
         if (player == null) {
             boolean preferExtensionDecoders = args.getBoolean(PREFER_EXTENSION_DECODERS, false);
             UUID drmSchemeUuid = bundleKeySet.contains(DRM_SCHEME_UUID_EXTRA)
@@ -355,8 +404,13 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
 
             trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
             trackSelectionHelper = new TrackSelectionHelper(trackSelector, videoTrackSelectionFactory);
-            player = ExoPlayerFactory.newSimpleInstance(getActivity(), trackSelector, new DefaultLoadControl(),
+
+            Log.d("ExoVideoPlayer2", "creating the player");
+            player = ExoPlayerFactory.newSimpleInstance(application, trackSelector, new DefaultLoadControl(),
                     drmSessionManager, extensionRendererMode);
+
+            assert player != null;
+
             player.addListener(this);
 
             eventLogger = new EventLogger(trackSelector);
@@ -382,7 +436,7 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
             Uri[] uris;
             String[] extensions;
             if (bundleKeySet.contains(URI_EXTRA)) {
-                uris = new Uri[]{(Uri) args.getSerializable(URI_EXTRA)};
+                uris = new Uri[]{ args.getParcelable(URI_EXTRA)};
                 extensions = new String[]{args.getString(EXTENSION_EXTRA, "")};
             }else if (bundleKeySet.contains(URI_LIST_EXTRA)) {
                 String[] uriStrings = args.getStringArray(URI_LIST_EXTRA);
@@ -394,31 +448,20 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
                 if (extensions == null) {
                     extensions = new String[uriStrings.length];
                 }
-            /*
-            // original
-            if (ACTION_VIEW.equals(action)) {
-                uris = new Uri[]{args.getData()};
-                extensions = new String[]{args.getString(EXTENSION_EXTRA)};
-            } else if (ACTION_VIEW_LIST.equals(action)) {
-                String[] uriStrings = args.getStringArray(URI_LIST_EXTRA);
-                uris = new Uri[uriStrings.length];
-                for (int i = 0; i < uriStrings.length; i++) {
-                    uris[i] = Uri.parse(uriStrings[i]);
-                }
-                extensions = args.getStringArray(EXTENSION_LIST_EXTRA);
-                if (extensions == null) {
-                    extensions = new String[uriStrings.length];
-                }
-            */
             } else {
                 //showToast(getString(R.string.unexpected_intent_action, action)); // TODO use snackbar and error handling callback
                 // TODO throw error, neither a playlist or item
-                return;
+                //return;
+                throw new IllegalArgumentException("Bad bundle provided");
             }
+
+            /*
+            // TODO necessary?
             if (Util.maybeRequestReadExternalStoragePermission(getActivity(), uris)) {
                 // The player will be reinitialized if the permission is granted.
                 return;
             }
+            */
             MediaSource[] mediaSources = new MediaSource[uris.length];
             for (int i = 0; i < uris.length; i++) {
                 mediaSources[i] = buildMediaSource(uris[i], extensions[i]);
@@ -431,7 +474,25 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
         }
     }
 
-    protected MediaSource buildMediaSource(Uri uri, String overrideExtension) {
+    @Override
+    public void onClick(View view) {
+        if (view == retryButton) {
+            initializePlayer(sArgs);
+        } else if (view.getParent() == debugRootView) {
+            MappingTrackSelector.MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
+            if (mappedTrackInfo != null) {
+                trackSelectionHelper.showSelectionDialog(getContext(), ((Button) view).getText(),
+                        trackSelector.getCurrentMappedTrackInfo(), (int) view.getTag());
+            }
+        }
+    }
+
+    @Override
+    public void onVisibilityChange(int visibility) {
+        debugRootView.setVisibility(visibility);
+    }
+
+    private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
         int type = Util.inferContentType(!TextUtils.isEmpty(overrideExtension) ? "." + overrideExtension
                 : uri.getLastPathSegment());
         switch (type) {
@@ -452,34 +513,17 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
         }
     }
 
-    protected DrmSessionManager<FrameworkMediaCrypto> buildDrmSessionManager(UUID uuid,
-                                                                           String licenseUrl, Map<String, String> keyRequestProperties) throws UnsupportedDrmException {
+
+    private DrmSessionManager<FrameworkMediaCrypto> buildDrmSessionManager(UUID uuid,
+                                                                             String licenseUrl, Map<String, String> keyRequestProperties) throws UnsupportedDrmException {
         if (Util.SDK_INT < 18) {
+            // TODO send debug message, stating there is no DRM
             return null;
         }
         HttpMediaDrmCallback drmCallback = new HttpMediaDrmCallback(licenseUrl,
                 buildHttpDataSourceFactory(false), keyRequestProperties);
         return new StreamingDrmSessionManager<>(uuid,
                 FrameworkMediaDrm.newInstance(uuid), drmCallback, null, mainHandler, eventLogger);
-    }
-
-    protected void releasePlayer() {
-        if (player != null) {
-            debugViewHelper.stop();
-            debugViewHelper = null;
-            shouldAutoPlay = player.getPlayWhenReady();
-            playerWindow = player.getCurrentWindowIndex();
-            playerPosition = C.TIME_UNSET;
-            Timeline timeline = player.getCurrentTimeline();
-            if (!timeline.isEmpty() && timeline.getWindow(playerWindow, window).isSeekable) {
-                playerPosition = player.getCurrentPosition();
-            }
-            player.release();
-            player = null;
-            trackSelector = null;
-            trackSelectionHelper = null;
-            eventLogger = null;
-        }
     }
 
     // TODO move this out to StreamOne Util class, and use BuildConfig to set this boolean
@@ -490,7 +534,7 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
      *                          DataSource factory.
      * @return A new DataSource factory.
      */
-    protected DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
+    private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
         return application
                 .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
     }
@@ -503,13 +547,12 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
      *                          DataSource factory.
      * @return A new HttpDataSource factory.
      */
-    protected HttpDataSource.Factory buildHttpDataSourceFactory(boolean useBandwidthMeter) {
+    private HttpDataSource.Factory buildHttpDataSourceFactory(boolean useBandwidthMeter) {
         return application
                 .buildHttpDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
     }
 
     // ExoPlayer.EventListener implementation
-
     @Override
     public void onLoadingChanged(boolean isLoading) {
         // Do nothing.
@@ -539,22 +582,22 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
         String errorString = null;
         if (e.type == ExoPlaybackException.TYPE_RENDERER) {
             Exception cause = e.getRendererException();
-            if (cause instanceof DecoderInitializationException) {
+            if (cause instanceof MediaCodecRenderer.DecoderInitializationException) {
                 // Special case for decoder initialization failures.
-                DecoderInitializationException decoderInitializationException =
-                        (DecoderInitializationException) cause;
+                MediaCodecRenderer.DecoderInitializationException decoderInitializationException =
+                        (MediaCodecRenderer.DecoderInitializationException) cause;
                 if (decoderInitializationException.decoderName == null) {
-                    if (decoderInitializationException.getCause() instanceof DecoderQueryException) {
-                        errorString = getString(R.string.error_querying_decoders);
+                    if (decoderInitializationException.getCause() instanceof MediaCodecUtil.DecoderQueryException) {
+                        errorString = application.getString(R.string.error_querying_decoders);
                     } else if (decoderInitializationException.secureDecoderRequired) {
-                        errorString = getString(R.string.error_no_secure_decoder,
+                        errorString = application.getString(R.string.error_no_secure_decoder,
                                 decoderInitializationException.mimeType);
                     } else {
-                        errorString = getString(R.string.error_no_decoder,
+                        errorString = application.getString(R.string.error_no_decoder,
                                 decoderInitializationException.mimeType);
                     }
                 } else {
-                    errorString = getString(R.string.error_instantiating_decoder,
+                    errorString = application.getString(R.string.error_instantiating_decoder,
                             decoderInitializationException.decoderName);
                 }
             }
@@ -570,22 +613,21 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
     @Override
     public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
         updateButtonVisibilities();
-        MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
+        MappingTrackSelector.MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo != null) {
             if (mappedTrackInfo.getTrackTypeRendererSupport(C.TRACK_TYPE_VIDEO)
-                    == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
+                    == MappingTrackSelector.MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
                 showToast(R.string.error_unsupported_video); // TODO use snackbar and error handling callback
             }
             if (mappedTrackInfo.getTrackTypeRendererSupport(C.TRACK_TYPE_AUDIO)
-                    == MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
+                    == MappingTrackSelector.MappedTrackInfo.RENDERER_SUPPORT_UNSUPPORTED_TRACKS) {
                 showToast(R.string.error_unsupported_audio); // TODO use snackbar and error handling callback
             }
         }
     }
 
     // User controls
-
-    protected void updateButtonVisibilities() {
+    private void updateButtonVisibilities() {
         debugRootView.removeAllViews();
 
         retryButton.setVisibility(playerNeedsSource ? View.VISIBLE : View.GONE);
@@ -595,7 +637,7 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
             return;
         }
 
-        MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
+        MappingTrackSelector.MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo == null) {
             return;
         }
@@ -603,7 +645,7 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
         for (int i = 0; i < mappedTrackInfo.length; i++) {
             TrackGroupArray trackGroups = mappedTrackInfo.getTrackGroups(i);
             if (trackGroups.length != 0) {
-                Button button = new Button(getActivity());
+                Button button = new Button(getContext());
                 int label;
                 switch (player.getRendererType(i)) {
                     case C.TRACK_TYPE_AUDIO:
@@ -620,23 +662,27 @@ public class ExoBaseVideoPlayerFragment extends Fragment implements OnClickListe
                 }
                 button.setText(label);
                 button.setTag(i);
-                button.setOnClickListener((OnClickListener) this);
+                button.setOnClickListener(this);
                 debugRootView.addView(button, debugRootView.getChildCount() - 1);
             }
         }
     }
 
-    protected void showControls() {
+    public void showControls() {
+        playerView.showController();
         debugRootView.setVisibility(View.VISIBLE);
     }
 
     // TODO replace with showSnackbar
-    protected void showToast(int messageId) {
-        showToast(getString(messageId));
+    private void showToast(int messageId) {
+        showToast(application.getString(messageId));
     }
 
     // TODO replace with showSnackbar
-    protected void showToast(String message) {
-        Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
+    private void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
+
 }
+
+

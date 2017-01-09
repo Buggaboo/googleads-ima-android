@@ -116,6 +116,8 @@ public class VideoFragment extends Fragment {
      * Shows or hides all non-video UI elements to make the video as large as possible.
      */
     public void makeFullscreen(boolean isFullscreen) {
+        if (mVideoExampleLayout == null) { return; }
+
         for (int i = 0; i < mVideoExampleLayout.getChildCount(); i++) {
             View view = mVideoExampleLayout.getChildAt(i);
             // If it's not the video element, hide or show it, depending on fullscreen status.

@@ -102,7 +102,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
     @SuppressLint("InflateParams")
     private View buildView(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        View view = inflater.inflate(R.layout.track_selection_dialog, null);
+        View view = inflater.inflate(R.layout.exo_track_selection_dialog, null);
         ViewGroup root = (ViewGroup) view.findViewById(R.id.root);
 
         TypedArray attributeArray = context.getTheme().obtainStyledAttributes(
@@ -126,7 +126,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
         defaultView.setText(R.string.selection_default);
         defaultView.setFocusable(true);
         defaultView.setOnClickListener(this);
-        root.addView(inflater.inflate(R.layout.list_divider, root, false));
+        root.addView(inflater.inflate(R.layout.exo_list_divider, root, false));
         root.addView(defaultView);
 
         // Per-track views.
@@ -140,7 +140,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
             trackViews[groupIndex] = new CheckedTextView[group.length];
             for (int trackIndex = 0; trackIndex < group.length; trackIndex++) {
                 if (trackIndex == 0) {
-                    root.addView(inflater.inflate(R.layout.list_divider, root, false));
+                    root.addView(inflater.inflate(R.layout.exo_list_divider, root, false));
                 }
                 int trackViewLayoutId = groupIsAdaptive ? android.R.layout.simple_list_item_multiple_choice
                         : android.R.layout.simple_list_item_single_choice;
@@ -173,7 +173,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
             enableRandomAdaptationView.setBackgroundResource(selectableItemBackgroundResourceId);
             enableRandomAdaptationView.setText(R.string.enable_random_adaptation);
             enableRandomAdaptationView.setOnClickListener(this);
-            root.addView(inflater.inflate(R.layout.list_divider, root, false));
+            root.addView(inflater.inflate(R.layout.exo_list_divider, root, false));
             root.addView(enableRandomAdaptationView);
         }
 
