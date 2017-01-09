@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion project.ext.compileSdkVersion
+    buildToolsVersion project.ext.buildToolsVersion
 
     defaultConfig {
         applicationId "com.google.ads.interactivemedia.v3.samples.videoplayerapp"
         minSdkVersion 16
-        targetSdkVersion 21
+        targetSdkVersion project.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
     }
@@ -26,8 +26,9 @@ android {
 
 dependencies {
     compile 'com.google.ads.interactivemedia.v3:interactivemedia:3.2.1'
-    compile 'com.android.support:appcompat-v7:21.+'
+    compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.google.android.gms:play-services-ads:8.4.0'
     compile 'com.google.android.gms:play-services-cast:8.4.0'
-    compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
+    //compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
+    compile project(':ExoPlayer')
 }

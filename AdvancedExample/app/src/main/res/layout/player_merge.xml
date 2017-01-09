@@ -13,12 +13,18 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<!-- TODO android:keepScreenOn="true" -->
+<!-- <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:keepScreenOn="true">
+-->
+
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
   <com.google.android.exoplayer2.ui.SimpleExoPlayerView android:id="@+id/player_view"
       android:layout_width="match_parent"
@@ -53,5 +59,6 @@
     </LinearLayout>
 
   </LinearLayout>
+</merge>
 
-</FrameLayout>
+

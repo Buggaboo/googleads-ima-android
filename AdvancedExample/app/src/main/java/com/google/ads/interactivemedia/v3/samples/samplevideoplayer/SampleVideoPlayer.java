@@ -18,9 +18,6 @@ import java.util.List;
  */
 public class SampleVideoPlayer extends VideoView implements VideoPlayer {
 
-    public enum PlaybackState {
-        STOPPED, PAUSED, PLAYING
-    }
 
     private MediaController mMediaController;
     private PlaybackState mPlaybackState;

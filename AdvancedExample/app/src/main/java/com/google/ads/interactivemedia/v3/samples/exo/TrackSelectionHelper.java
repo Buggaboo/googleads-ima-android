@@ -5,7 +5,6 @@ package com.google.ads.interactivemedia.v3.samples.exo;
  */
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -75,7 +74,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
      * @param trackInfo The current track information.
      * @param rendererIndex The index of the renderer.
      */
-    public void showSelectionDialog(Activity activity, CharSequence title, MappedTrackInfo trackInfo,
+    public void showSelectionDialog(Context context, CharSequence title, MappedTrackInfo trackInfo,
                                     int rendererIndex) {
         this.trackInfo = trackInfo;
         this.rendererIndex = rendererIndex;
@@ -91,7 +90,7 @@ public class TrackSelectionHelper implements View.OnClickListener,
         isDisabled = selector.getRendererDisabled(rendererIndex);
         override = selector.getSelectionOverride(rendererIndex, trackGroups);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle(title)
                 .setView(buildView(builder.getContext()))
                 .setPositiveButton(android.R.string.ok, this)

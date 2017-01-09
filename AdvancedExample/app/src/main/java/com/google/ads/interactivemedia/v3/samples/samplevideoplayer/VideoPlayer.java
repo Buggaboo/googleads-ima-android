@@ -7,6 +7,10 @@ package com.google.ads.interactivemedia.v3.samples.samplevideoplayer;
  */
 public interface VideoPlayer {
 
+    enum PlaybackState {
+        STOPPED, PAUSED, PLAYING
+    }
+
     /**
      *  Interface for alerting caller of major video events.
      */

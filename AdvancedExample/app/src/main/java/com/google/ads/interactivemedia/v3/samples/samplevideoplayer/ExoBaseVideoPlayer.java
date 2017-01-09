@@ -814,15 +814,18 @@ public class ExoBaseVideoPlayer extends FrameLayout implements View.OnClickListe
      * @param player The {@link SimpleExoPlayer} to use.
      */
     public void setPlayer(SimpleExoPlayer player) {
+        // ignore if it's the same object
         if (this.player == player) {
             return;
         }
+        // get rid of the previous object
         if (this.player != null) {
             this.player.setTextOutput(null);
             this.player.setVideoListener(null);
             this.player.removeListener(componentListener);
             this.player.setVideoSurface(null);
         }
+        // assign the new
         this.player = player;
         if (useController) {
             controller.setPlayer(player);

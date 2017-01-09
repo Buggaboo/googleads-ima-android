@@ -44,7 +44,9 @@ public class ExoSampleVideoPlayer extends ExoBaseVideoPlayer /* FrameLayout */ i
 
     @Override
     public void seekTo(int videoPosition) {
-        player.seekTo((long) videoPosition);
+        if (player != null) {
+            player.seekTo((long) videoPosition);
+        }
     }
 
     @Override
@@ -105,7 +107,8 @@ public class ExoSampleVideoPlayer extends ExoBaseVideoPlayer /* FrameLayout */ i
 
     @Override
     public int getDuration() {
-        return mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED ? 0 : (int) player.getDuration();
+        return mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED ? 0 :
+                player != null ? (int) player.getDuration() : 0;
     }
 
     /*
@@ -150,7 +153,9 @@ public class ExoSampleVideoPlayer extends ExoBaseVideoPlayer /* FrameLayout */ i
 
     @Override
     public void pause() {
-        player.stop();
+        if (player != null) {
+            player.stop();
+        }
         mPlaybackState = SampleVideoPlayer.PlaybackState.PAUSED;
         for (PlayerCallback callback : mVideoPlayerCallbacks) {
             callback.onPause();
@@ -162,7 +167,9 @@ public class ExoSampleVideoPlayer extends ExoBaseVideoPlayer /* FrameLayout */ i
         if (mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED) {
             return;
         }
-        player.stop();
+        if (player != null) {
+            player.stop();
+        }
         releasePlayer();
         mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
     }
