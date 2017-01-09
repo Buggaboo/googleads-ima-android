@@ -3,6 +3,7 @@
 package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -227,6 +228,10 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
      * called when content is resumed after ad playback or when focus has returned to the app.
      */
     public void restorePosition() {
+
+        Log.d("VideoPlayerWithAdPl...", "restorePosition: url: " + mContentVideoUrl);
+        mVideoPlayer.setVideoPath(mContentVideoUrl); // TODO determine solvable with an Observable?
+
         if (mIsAdDisplayed) {
             mVideoPlayer.seekTo(mSavedAdPosition);
         } else {
@@ -286,7 +291,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
      * an ad finishes playing. Re-enables the media controller.
      */
     public void resumeContentAfterAdPlayback() {
-        if (mContentVideoUrl == null || mContentVideoUrl.isEmpty()) {
+        if (TextUtils.isEmpty(mContentVideoUrl)) {
             Log.w("ImaExample", "No content URL specified.");
             return;
         }

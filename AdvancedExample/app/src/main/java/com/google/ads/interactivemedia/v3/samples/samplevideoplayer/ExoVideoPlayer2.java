@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -216,16 +217,13 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
 
     @Override
     public void seekTo(int videoPosition) {
-        if (player == null) {
-            return;
-            //initializePlayer(sArgs); // also MIA
-        }
-
+        Log.d("ExoVideoPlayer2", "Using the player, bundle set? -> " + String.valueOf(sArgs != null));
         player.seekTo(videoPosition);
     }
 
     @Override
     public void setVideoPath(String videoUrl) {
+        Log.d("ExoVideoPlayer2", "setVideoPath");
         if (sArgs != null) {
             releasePlayer();
         }
@@ -339,6 +337,8 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
             if (!timeline.isEmpty() && timeline.getWindow(playerWindow, window).isSeekable) {
                 playerPosition = player.getCurrentPosition();
             }
+
+            Log.d("ExoVideoPlayer2", "Releasing the player");
             player.release();
             player = null;
             trackSelector = null;
@@ -349,7 +349,7 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
 
     public void initializePlayer(String url) {
         Bundle args = new Bundle();
-        args.putString(URI_EXTRA, url);
+        args.putParcelable(URI_EXTRA, Uri.parse(url));
         initializePlayer(args);
     }
 
@@ -360,7 +360,7 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
         sArgs = args;
         Set<String> bundleKeySet = args.keySet();
 
-        // TODO remove debug
+        // TODO remove debug, reasoning
         if (player != null) throw new IllegalArgumentException();
 
         if (player == null) {
@@ -404,8 +404,13 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
 
             trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
             trackSelectionHelper = new TrackSelectionHelper(trackSelector, videoTrackSelectionFactory);
+
+            Log.d("ExoVideoPlayer2", "creating the player");
             player = ExoPlayerFactory.newSimpleInstance(application, trackSelector, new DefaultLoadControl(),
                     drmSessionManager, extensionRendererMode);
+
+            assert player != null;
+
             player.addListener(this);
 
             eventLogger = new EventLogger(trackSelector);
@@ -431,7 +436,7 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
             Uri[] uris;
             String[] extensions;
             if (bundleKeySet.contains(URI_EXTRA)) {
-                uris = new Uri[]{(Uri) args.getSerializable(URI_EXTRA)};
+                uris = new Uri[]{ args.getParcelable(URI_EXTRA)};
                 extensions = new String[]{args.getString(EXTENSION_EXTRA, "")};
             }else if (bundleKeySet.contains(URI_LIST_EXTRA)) {
                 String[] uriStrings = args.getStringArray(URI_LIST_EXTRA);
@@ -664,6 +669,7 @@ public class ExoVideoPlayer2 extends FrameLayout implements VideoPlayer, View.On
     }
 
     public void showControls() {
+        playerView.showController();
         debugRootView.setVisibility(View.VISIBLE);
     }
 

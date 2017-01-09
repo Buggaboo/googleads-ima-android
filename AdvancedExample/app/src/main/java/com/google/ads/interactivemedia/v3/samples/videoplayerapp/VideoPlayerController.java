@@ -4,6 +4,7 @@ package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -292,12 +293,15 @@ public class VideoPlayerController {
     }
 
     /**
-     * Set metadata about the content video. In more complex implementations, this might
+     * Set metadata about the content video. In more complex implementations, this might be
      * more than just a URL and could trigger additional decisions regarding ad tag selection.
+     *
+     * For instance: DRM.
      */
     public void setContentVideo(String videoPath) {
         mVideoPlayerWithAdPlayback.setContentVideoPath(videoPath);
         mContentVideoUrl = videoPath;
+        Log.d("VideoPlayerController", "setContentVideo: Setting the videopath: " + videoPath);
     }
 
     public String getContentVideoUrl() {
@@ -324,6 +328,8 @@ public class VideoPlayerController {
     public void resume() {
         mVideoPlayerWithAdPlayback.restorePosition();
         if (mAdsManager != null && mVideoPlayerWithAdPlayback.getIsAdDisplayed()) {
+            // TODO remove
+            Log.d("VideoPlayerController", "resume: content url: " + mContentVideoUrl);
             mAdsManager.resume();
         } else {
             mVideoPlayerWithAdPlayback.play();
