@@ -14,7 +14,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.MainApplication;
-import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.SampleVideoPlayer;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
 import com.google.ads.interactivemedia.v3.samples.videoplayerapp.BuildConfig;
 import com.google.ads.interactivemedia.v3.samples.videoplayerapp.R;
@@ -177,7 +176,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
                 mediaPlayer.reset();
                 mediaPlayer.setDisplay(getHolder());
                 enablePlaybackControls();
-                mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
+                mPlaybackState = PlaybackState.STOPPED;
 
                 for (PlayerCallback callback : mVideoPlayerCallbacks) {
                     callback.onCompleted();
@@ -193,7 +192,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
+                mPlaybackState = PlaybackState.STOPPED;
                 for (PlayerCallback callback : mVideoPlayerCallbacks) {
                     callback.onError();
                 }
@@ -226,19 +225,19 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public int getDuration() {
-        return mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED ? 0 : (int) player.getDuration();
+        return mPlaybackState == PlaybackState.STOPPED ? 0 : (int) player.getDuration();
     }
 
     /*
     @Override
     public void setOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
-        // The OnCompletionListener can only be implemented by SampleVideoPlayer.
+        // The OnCompletionListener can only be implemented by 
         throw new UnsupportedOperationException();
     }
 
     @Override
     public void setOnErrorListener(MediaPlayer.OnErrorListener listener) {
-        // The OnErrorListener can only be implemented by SampleVideoPlayer.
+        // The OnErrorListener can only be implemented by 
         throw new UnsupportedOperationException();
     }
 */
@@ -266,7 +265,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
                 // Already playing; do nothing.
                 break;
         }
-        mPlaybackState = SampleVideoPlayer.PlaybackState.PLAYING;
+        mPlaybackState = PlaybackState.PLAYING;
     }
 
     @Override
@@ -282,7 +281,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         if (mPlaybackState == PlaybackState.STOPPED) {
             return;
         }
-        player.stop(); // TODO determine also releasePlayer()?
+        player.stop();
         mPlaybackState = PlaybackState.STOPPED;
     }
 
@@ -309,11 +308,14 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     }
 
     // clean up
+    // TODO determine if this causes the unresumability issue
+    /*
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         releasePlayer();
     }
+    */
 
     /**
      * Specific to ExoPlayer
@@ -510,7 +512,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         }
     }
 
-
     private DrmSessionManager<FrameworkMediaCrypto> buildDrmSessionManager(UUID uuid,
                                                                              String licenseUrl, Map<String, String> keyRequestProperties) throws UnsupportedDrmException {
         if (Util.SDK_INT < 18) {
@@ -558,8 +559,17 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-        if (playbackState == ExoPlayer.STATE_ENDED) {
-            updateButtonVisibilities();
+        switch (playbackState) {
+            case ExoPlayer.STATE_READY:
+                break;
+            case ExoPlayer.STATE_IDLE:
+                break;
+            case ExoPlayer.STATE_BUFFERING:
+                break;
+            case ExoPlayer.STATE_ENDED:
+                updateButtonVisibilities();
+                break;
+            default:
         }
     }
 
@@ -664,12 +674,12 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         }
     }
 
-    // TODO replace with showSnackbar
+    // TODO replace with showSnackbar, as an interface that must be developed by the Activity (by way of Context)
     private void showToast(int messageId) {
         showToast(application.getString(messageId));
     }
 
-    // TODO replace with showSnackbar
+    // TODO replace with showSnackbar, as an interface that must be developed by the Activity (by way of Context)
     private void showToast(String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }

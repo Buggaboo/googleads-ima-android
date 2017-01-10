@@ -18,7 +18,6 @@ import java.util.List;
  */
 public class SampleVideoPlayer extends VideoView implements VideoPlayer {
 
-
     private MediaController mMediaController;
     private PlaybackState mPlaybackState;
     private final List<PlayerCallback> mVideoPlayerCallbacks = new ArrayList<PlayerCallback>(1);
