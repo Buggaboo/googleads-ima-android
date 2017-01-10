@@ -298,7 +298,6 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
         }
         mIsAdDisplayed = false;
         mVideoPlayer.setVideoPath(mContentVideoUrl);
-        mVideoPlayer.enablePlaybackControls();
         mVideoPlayer.seekTo(mSavedContentPosition);
         mVideoPlayer.play();
     }

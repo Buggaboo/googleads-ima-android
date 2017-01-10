@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -17,6 +16,7 @@ import android.widget.Toast;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.MainApplication;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.SampleVideoPlayer;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
+import com.google.ads.interactivemedia.v3.samples.videoplayerapp.BuildConfig;
 import com.google.ads.interactivemedia.v3.samples.videoplayerapp.R;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -84,7 +84,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     public static final String URI_LIST_EXTRA = "uri_list";
     public static final String EXTENSION_LIST_EXTRA = "extension_list";
 
-    // persist
+    // TODO persist
     private static Bundle sArgs = null;
 
     // builder params
@@ -132,7 +132,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     private SimpleExoPlayerView playerView;
     private SimpleExoPlayer player;
 
-
     private PlaybackState mPlaybackState;
     private final List<PlayerCallback> mVideoPlayerCallbacks = new ArrayList<PlayerCallback>(1);
 
@@ -163,9 +162,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         playerView.setControllerVisibilityListener(this);
         playerView.requestFocus();
     }
-
-
-    //enablePlaybackControls(); // TODO necessary?
 
     // Set OnCompletionListener to notify our callbacks when the video is completed.
     // TODO you need onLoadCompletion, it's already in the EventLogger
@@ -217,13 +213,11 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void seekTo(int videoPosition) {
-        Log.d("ExoVideoPlayer2", "Using the player, bundle set? -> " + String.valueOf(sArgs != null));
         player.seekTo(videoPosition);
     }
 
     @Override
     public void setVideoPath(String videoUrl) {
-        Log.d("ExoVideoPlayer2", "setVideoPath");
         if (sArgs != null) {
             releasePlayer();
         }
@@ -277,8 +271,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void pause() {
-        // TODO stop
-        mPlaybackState = SampleVideoPlayer.PlaybackState.PAUSED;
+        mPlaybackState = PlaybackState.PAUSED;
         for (PlayerCallback callback : mVideoPlayerCallbacks) {
             callback.onPause();
         }
@@ -286,22 +279,23 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void stopPlayback() {
-        if (mPlaybackState == SampleVideoPlayer.PlaybackState.STOPPED) {
+        if (mPlaybackState == PlaybackState.STOPPED) {
             return;
         }
-        // TODO stop and tear down
-        mPlaybackState = SampleVideoPlayer.PlaybackState.STOPPED;
+        player.stop(); // TODO determine also releasePlayer()?
+        mPlaybackState = PlaybackState.STOPPED;
     }
 
     @Override
     public void disablePlaybackControls() {
         playerView.hideController();
+        debugRootView.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void enablePlaybackControls() {
         playerView.showController();
-        showControls();
+        debugRootView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -328,8 +322,10 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     public void releasePlayer() {
         if (player != null) {
-            debugViewHelper.stop();
-            debugViewHelper = null;
+            if (BuildConfig.DEBUG) {
+                debugViewHelper.stop();
+                debugViewHelper = null;
+            }
             shouldAutoPlay = player.getPlayWhenReady();
             playerWindow = player.getCurrentWindowIndex();
             playerPosition = C.TIME_UNSET;
@@ -338,7 +334,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
                 playerPosition = player.getCurrentPosition();
             }
 
-            Log.d("ExoVideoPlayer2", "Releasing the player");
             player.release();
             player = null;
             trackSelector = null;
@@ -405,11 +400,8 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
             trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
             trackSelectionHelper = new TrackSelectionHelper(trackSelector, videoTrackSelectionFactory);
 
-            Log.d("ExoVideoPlayer2", "creating the player");
             player = ExoPlayerFactory.newSimpleInstance(application, trackSelector, new DefaultLoadControl(),
                     drmSessionManager, extensionRendererMode);
-
-            assert player != null;
 
             player.addListener(this);
 
@@ -428,8 +420,12 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
                 }
             }
             player.setPlayWhenReady(shouldAutoPlay);
-            debugViewHelper = new DebugTextViewHelper(player, debugTextView);
-            debugViewHelper.start();
+
+            if (BuildConfig.DEBUG) {
+                debugViewHelper = new DebugTextViewHelper(player, debugTextView);
+                debugViewHelper.start();
+            }
+
             playerNeedsSource = true;
         }
         if (playerNeedsSource) {
@@ -477,6 +473,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     @Override
     public void onClick(View view) {
         if (view == retryButton) {
+            releasePlayer();
             initializePlayer(sArgs);
         } else if (view.getParent() == debugRootView) {
             MappingTrackSelector.MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
@@ -556,14 +553,14 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     @Override
     public void onLoadingChanged(boolean isLoading) {
         // Do nothing.
+        // TODO check if something else is doing this
     }
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
         if (playbackState == ExoPlayer.STATE_ENDED) {
-            showControls();
+            updateButtonVisibilities();
         }
-        updateButtonVisibilities();
     }
 
     @Override
@@ -607,7 +604,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         }
         playerNeedsSource = true;
         updateButtonVisibilities();
-        showControls();
     }
 
     @Override
@@ -666,11 +662,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
                 debugRootView.addView(button, debugRootView.getChildCount() - 1);
             }
         }
-    }
-
-    public void showControls() {
-        playerView.showController();
-        debugRootView.setVisibility(View.VISIBLE);
     }
 
     // TODO replace with showSnackbar

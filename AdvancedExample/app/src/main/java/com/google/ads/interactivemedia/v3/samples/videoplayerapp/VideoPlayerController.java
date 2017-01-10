@@ -301,7 +301,6 @@ public class VideoPlayerController {
     public void setContentVideo(String videoPath) {
         mVideoPlayerWithAdPlayback.setContentVideoPath(videoPath);
         mContentVideoUrl = videoPath;
-        Log.d("VideoPlayerController", "setContentVideo: Setting the videopath: " + videoPath);
     }
 
     public String getContentVideoUrl() {
