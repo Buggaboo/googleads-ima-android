@@ -216,6 +216,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     // Methods implementing the VideoPlayer interface.
     @Override
     public void play() {
+        disablePlaybackControls();
         start();
     }
 
