@@ -65,12 +65,38 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import timber.log.Timber;
+
+import static com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer.PlaybackState.PAUSED;
+import static com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer.PlaybackState.STOPPED;
+
 /**
  * Created by jasmsison on 09/01/17.
  */
 
 public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnClickListener, ExoPlayer.EventListener,
         PlaybackControlView.VisibilityListener {
+
+    enum ExoPlayerState {
+        WHO_KNOWS(0), IDLE(1), BUFFERING(2), READY(3), ENDED(4);
+
+        int state;
+
+        ExoPlayerState(int i) {
+            state = i;
+        }
+
+        int toInt() {
+            return state;
+        }
+
+        static ExoPlayerState valueOf(int i) {
+            for (ExoPlayerState s : values()) {
+                if (s.toInt() == i) { return s; };
+            }
+            return WHO_KNOWS;
+        }
+    }
 
     // constants
     public static final String DRM_SCHEME_UUID_EXTRA = "drm_scheme_uuid";
@@ -93,6 +119,8 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         DEFAULT_COOKIE_MANAGER = new CookieManager();
         DEFAULT_COOKIE_MANAGER.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
     }
+
+    private ExoPlayerState exoPlayerPlaybackState; // 0 for unknown, known states 1-4 (IDLE, BUFFERING, READY, ENDED)
 
     public ExoVideoPlayer(Context context) {
         super(context);
@@ -135,7 +163,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     private final List<PlayerCallback> mVideoPlayerCallbacks = new ArrayList<PlayerCallback>(1);
 
     private void init(Context context) {
-        mPlaybackState = PlaybackState.STOPPED;
+        mPlaybackState = STOPPED;
         setKeepScreenOn(true);
 
         application = MainApplication.instance;
@@ -162,49 +190,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         playerView.requestFocus();
     }
 
-    // Set OnCompletionListener to notify our callbacks when the video is completed.
-    // TODO you need onLoadCompletion, it's already in the EventLogger
-        /*
-        super.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-
-            @Override
-            public void onCompletion(MediaPlayer mediaPlayer) {
-                // Reset the MediaPlayer.
-                // This prevents a race condition which occasionally results in the media
-                // player crashing when switching between videos.
-                disablePlaybackControls();
-                mediaPlayer.reset();
-                mediaPlayer.setDisplay(getHolder());
-                enablePlaybackControls();
-                mPlaybackState = PlaybackState.STOPPED;
-
-                for (PlayerCallback callback : mVideoPlayerCallbacks) {
-                    callback.onCompleted();
-                }
-            }
-        });
-        */
-
-    // TODO you need onPlayerError, it's already in the EventLogger
-    // Set OnErrorListener to notify our callbacks if the video errors.
-        /*
-        super.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-
-            @Override
-            public boolean onError(MediaPlayer mp, int what, int extra) {
-                mPlaybackState = PlaybackState.STOPPED;
-                for (PlayerCallback callback : mVideoPlayerCallbacks) {
-                    callback.onError();
-                }
-
-                // Returning true signals to MediaPlayer that we handled the error. This will
-                // prevent the completion handler from being called.
-                return true;
-            }
-        });
-        }
-        */
-
     @Override
     public int getCurrentPosition() {
         return (int) player.getCurrentPosition();
@@ -225,22 +210,8 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public int getDuration() {
-        return mPlaybackState == PlaybackState.STOPPED ? 0 : (int) player.getDuration();
+        return mPlaybackState == STOPPED ? 0 : (int) player.getDuration();
     }
-
-    /*
-    @Override
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener listener) {
-        // The OnCompletionListener can only be implemented by 
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setOnErrorListener(MediaPlayer.OnErrorListener listener) {
-        // The OnErrorListener can only be implemented by 
-        throw new UnsupportedOperationException();
-    }
-*/
 
     // Methods implementing the VideoPlayer interface.
     @Override
@@ -278,11 +249,12 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void stopPlayback() {
-        if (mPlaybackState == PlaybackState.STOPPED) {
+        if (mPlaybackState == STOPPED) {
             return;
         }
         player.stop();
-        mPlaybackState = PlaybackState.STOPPED;
+        releasePlayer(); // pause is handled by the thing above
+        mPlaybackState = STOPPED;
     }
 
     @Override
@@ -308,14 +280,12 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     }
 
     // clean up
-    // TODO determine if this causes the unresumability issue
-    /*
+    // always release no matter what
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         releasePlayer();
     }
-    */
 
     /**
      * Specific to ExoPlayer
@@ -559,18 +529,28 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+        exoPlayerPlaybackState = ExoPlayerState.valueOf(playbackState);
         switch (playbackState) {
-            case ExoPlayer.STATE_READY:
-                break;
             case ExoPlayer.STATE_IDLE:
                 break;
             case ExoPlayer.STATE_BUFFERING:
+                // TODO low prio: do a buffering icon
+                break;
+            case ExoPlayer.STATE_READY:
+                mPlaybackState = PAUSED;
                 break;
             case ExoPlayer.STATE_ENDED:
-                updateButtonVisibilities();
+                mPlaybackState = STOPPED;
+                for (PlayerCallback callback : mVideoPlayerCallbacks) {
+                    callback.onCompleted();
+                }
+                //updateButtonVisibilities(); // TODO determine if should be turned on
                 break;
             default:
         }
+
+        Timber.d("playWhenReady: %b, exoplayer state: %s, abstract state: %s",
+                playWhenReady, exoPlayerPlaybackState.toString(), mPlaybackState.toString());
     }
 
     @Override
@@ -612,6 +592,13 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         if (errorString != null) {
             showToast(errorString); // TODO use snackbar and error handling callback
         }
+
+        // handle error
+        mPlaybackState = PlaybackState.STOPPED;
+        for (PlayerCallback callback : mVideoPlayerCallbacks) {
+            callback.onError();
+        }
+
         playerNeedsSource = true;
         updateButtonVisibilities();
     }
@@ -683,7 +670,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     private void showToast(String message) {
         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
-
 }
 
 

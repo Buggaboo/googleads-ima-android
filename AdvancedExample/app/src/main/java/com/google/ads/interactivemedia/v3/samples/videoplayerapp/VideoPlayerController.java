@@ -4,7 +4,6 @@ package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -193,7 +192,6 @@ public class VideoPlayerController {
 
     private void log(String message) {
         if (mLog != null) {
-            // TODO replace with Timber
             mLog.log(message + "\n");
         }
     }
@@ -327,8 +325,6 @@ public class VideoPlayerController {
     public void resume() {
         mVideoPlayerWithAdPlayback.restorePosition();
         if (mAdsManager != null && mVideoPlayerWithAdPlayback.getIsAdDisplayed()) {
-            // TODO remove
-            Log.d("VideoPlayerController", "resume: content url: " + mContentVideoUrl);
             mAdsManager.resume();
         } else {
             mVideoPlayerWithAdPlayback.play();

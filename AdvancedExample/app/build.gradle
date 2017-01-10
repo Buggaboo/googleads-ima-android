@@ -29,6 +29,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.google.android.gms:play-services-ads:8.4.0'
     compile 'com.google.android.gms:play-services-cast:8.4.0'
-    //compile 'com.google.android.exoplayer:exoplayer:r2.1.1'
+    compile 'com.jakewharton.timber:timber:4.5.0'
     compile project(':ExoPlayer')
 }

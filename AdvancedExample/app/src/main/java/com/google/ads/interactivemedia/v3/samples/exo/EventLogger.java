@@ -4,9 +4,7 @@ package com.google.ads.interactivemedia.v3.samples.exo;
  * Created by jasmsison on 07/01/17.
  */
 
-
 import android.os.SystemClock;
-import android.util.Log;
 import android.view.Surface;
 
 import com.google.android.exoplayer2.C;
@@ -42,8 +40,10 @@ import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Locale;
 
+import timber.log.Timber;
+
 /**
- * Logs player events using {@link Log}.
+ * Logs player events using {@link Timber}.
  */
 public class EventLogger implements ExoPlayer.EventListener,
         AudioRendererEventListener, VideoRendererEventListener, AdaptiveMediaSourceEventListener,
@@ -77,18 +77,18 @@ public class EventLogger implements ExoPlayer.EventListener,
 
     @Override
     public void onLoadingChanged(boolean isLoading) {
-        Log.d(TAG, "loading [" + isLoading + "]");
+        Timber.d("loading [" + isLoading + "]");
     }
 
     @Override
     public void onPlayerStateChanged(boolean playWhenReady, int state) {
-        Log.d(TAG, "state [" + getSessionTimeString() + ", " + playWhenReady + ", "
+        Timber.d("state [" + getSessionTimeString() + ", " + playWhenReady + ", "
                 + getStateString(state) + "]");
     }
 
     @Override
     public void onPositionDiscontinuity() {
-        Log.d(TAG, "positionDiscontinuity");
+        Timber.d("positionDiscontinuity");
     }
 
     @Override
@@ -98,132 +98,132 @@ public class EventLogger implements ExoPlayer.EventListener,
         }
         int periodCount = timeline.getPeriodCount();
         int windowCount = timeline.getWindowCount();
-        Log.d(TAG, "sourceInfo [periodCount=" + periodCount + ", windowCount=" + windowCount);
+        Timber.d("sourceInfo [periodCount=" + periodCount + ", windowCount=" + windowCount);
         for (int i = 0; i < Math.min(periodCount, MAX_TIMELINE_ITEM_LINES); i++) {
             timeline.getPeriod(i, period);
-            Log.d(TAG, "  " + "period [" + getTimeString(period.getDurationMs()) + "]");
+            Timber.d("  " + "period [" + getTimeString(period.getDurationMs()) + "]");
         }
         if (periodCount > MAX_TIMELINE_ITEM_LINES) {
-            Log.d(TAG, "  ...");
+            Timber.d("  ...");
         }
         for (int i = 0; i < Math.min(windowCount, MAX_TIMELINE_ITEM_LINES); i++) {
             timeline.getWindow(i, window);
-            Log.d(TAG, "  " + "window [" + getTimeString(window.getDurationMs()) + ", "
+            Timber.d("  " + "window [" + getTimeString(window.getDurationMs()) + ", "
                     + window.isSeekable + ", " + window.isDynamic + "]");
         }
         if (windowCount > MAX_TIMELINE_ITEM_LINES) {
-            Log.d(TAG, "  ...");
+            Timber.d("  ...");
         }
-        Log.d(TAG, "]");
+        Timber.d("]");
     }
 
     @Override
     public void onPlayerError(ExoPlaybackException e) {
-        Log.e(TAG, "playerFailed [" + getSessionTimeString() + "]", e);
+        Timber.e("playerFailed [" + getSessionTimeString() + "]", e);
     }
 
     @Override
     public void onTracksChanged(TrackGroupArray ignored, TrackSelectionArray trackSelections) {
         MappedTrackInfo mappedTrackInfo = trackSelector.getCurrentMappedTrackInfo();
         if (mappedTrackInfo == null) {
-            Log.d(TAG, "Tracks []");
+            Timber.d("Tracks []");
             return;
         }
-        Log.d(TAG, "Tracks [");
+        Timber.d("Tracks [");
         // Log tracks associated to renderers.
         for (int rendererIndex = 0; rendererIndex < mappedTrackInfo.length; rendererIndex++) {
             TrackGroupArray rendererTrackGroups = mappedTrackInfo.getTrackGroups(rendererIndex);
             TrackSelection trackSelection = trackSelections.get(rendererIndex);
             if (rendererTrackGroups.length > 0) {
-                Log.d(TAG, "  Renderer:" + rendererIndex + " [");
+                Timber.d("  Renderer:" + rendererIndex + " [");
                 for (int groupIndex = 0; groupIndex < rendererTrackGroups.length; groupIndex++) {
                     TrackGroup trackGroup = rendererTrackGroups.get(groupIndex);
                     String adaptiveSupport = getAdaptiveSupportString(trackGroup.length,
                             mappedTrackInfo.getAdaptiveSupport(rendererIndex, groupIndex, false));
-                    Log.d(TAG, "    Group:" + groupIndex + ", adaptive_supported=" + adaptiveSupport + " [");
+                    Timber.d("    Group:" + groupIndex + ", adaptive_supported=" + adaptiveSupport + " [");
                     for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
                         String status = getTrackStatusString(trackSelection, trackGroup, trackIndex);
                         String formatSupport = getFormatSupportString(
                                 mappedTrackInfo.getTrackFormatSupport(rendererIndex, groupIndex, trackIndex));
-                        Log.d(TAG, "      " + status + " Track:" + trackIndex + ", "
+                        Timber.d("      " + status + " Track:" + trackIndex + ", "
                                 + getFormatString(trackGroup.getFormat(trackIndex))
                                 + ", supported=" + formatSupport);
                     }
-                    Log.d(TAG, "    ]");
+                    Timber.d("    ]");
                 }
                 // Log metadata for at most one of the tracks selected for the renderer.
                 if (trackSelection != null) {
                     for (int selectionIndex = 0; selectionIndex < trackSelection.length(); selectionIndex++) {
                         Metadata metadata = trackSelection.getFormat(selectionIndex).metadata;
                         if (metadata != null) {
-                            Log.d(TAG, "    Metadata [");
+                            Timber.d("    Metadata [");
                             printMetadata(metadata, "      ");
-                            Log.d(TAG, "    ]");
+                            Timber.d("    ]");
                             break;
                         }
                     }
                 }
-                Log.d(TAG, "  ]");
+                Timber.d("  ]");
             }
         }
         // Log tracks not associated with a renderer.
         TrackGroupArray unassociatedTrackGroups = mappedTrackInfo.getUnassociatedTrackGroups();
         if (unassociatedTrackGroups.length > 0) {
-            Log.d(TAG, "  Renderer:None [");
+            Timber.d("  Renderer:None [");
             for (int groupIndex = 0; groupIndex < unassociatedTrackGroups.length; groupIndex++) {
-                Log.d(TAG, "    Group:" + groupIndex + " [");
+                Timber.d("    Group:" + groupIndex + " [");
                 TrackGroup trackGroup = unassociatedTrackGroups.get(groupIndex);
                 for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
                     String status = getTrackStatusString(false);
                     String formatSupport = getFormatSupportString(
                             RendererCapabilities.FORMAT_UNSUPPORTED_TYPE);
-                    Log.d(TAG, "      " + status + " Track:" + trackIndex + ", "
+                    Timber.d("      " + status + " Track:" + trackIndex + ", "
                             + getFormatString(trackGroup.getFormat(trackIndex))
                             + ", supported=" + formatSupport);
                 }
-                Log.d(TAG, "    ]");
+                Timber.d("    ]");
             }
-            Log.d(TAG, "  ]");
+            Timber.d("  ]");
         }
-        Log.d(TAG, "]");
+        Timber.d("]");
     }
 
     // MetadataRenderer.Output
 
     @Override
     public void onMetadata(Metadata metadata) {
-        Log.d(TAG, "onMetadata [");
+        Timber.d("onMetadata [");
         printMetadata(metadata, "  ");
-        Log.d(TAG, "]");
+        Timber.d("]");
     }
 
     // AudioRendererEventListener
 
     @Override
     public void onAudioEnabled(DecoderCounters counters) {
-        Log.d(TAG, "audioEnabled [" + getSessionTimeString() + "]");
+        Timber.d("audioEnabled [" + getSessionTimeString() + "]");
     }
 
     @Override
     public void onAudioSessionId(int audioSessionId) {
-        Log.d(TAG, "audioSessionId [" + audioSessionId + "]");
+        Timber.d("audioSessionId [" + audioSessionId + "]");
     }
 
     @Override
     public void onAudioDecoderInitialized(String decoderName, long elapsedRealtimeMs,
                                           long initializationDurationMs) {
-        Log.d(TAG, "audioDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
+        Timber.d("audioDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
     }
 
     @Override
     public void onAudioInputFormatChanged(Format format) {
-        Log.d(TAG, "audioFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
+        Timber.d("audioFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
                 + "]");
     }
 
     @Override
     public void onAudioDisabled(DecoderCounters counters) {
-        Log.d(TAG, "audioDisabled [" + getSessionTimeString() + "]");
+        Timber.d("audioDisabled [" + getSessionTimeString() + "]");
     }
 
     @Override
@@ -236,29 +236,29 @@ public class EventLogger implements ExoPlayer.EventListener,
 
     @Override
     public void onVideoEnabled(DecoderCounters counters) {
-        Log.d(TAG, "videoEnabled [" + getSessionTimeString() + "]");
+        Timber.d("videoEnabled [" + getSessionTimeString() + "]");
     }
 
     @Override
     public void onVideoDecoderInitialized(String decoderName, long elapsedRealtimeMs,
                                           long initializationDurationMs) {
-        Log.d(TAG, "videoDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
+        Timber.d("videoDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
     }
 
     @Override
     public void onVideoInputFormatChanged(Format format) {
-        Log.d(TAG, "videoFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
+        Timber.d("videoFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
                 + "]");
     }
 
     @Override
     public void onVideoDisabled(DecoderCounters counters) {
-        Log.d(TAG, "videoDisabled [" + getSessionTimeString() + "]");
+        Timber.d("videoDisabled [" + getSessionTimeString() + "]");
     }
 
     @Override
     public void onDroppedFrames(int count, long elapsed) {
-        Log.d(TAG, "droppedFrames [" + getSessionTimeString() + ", " + count + "]");
+        Timber.d("droppedFrames [" + getSessionTimeString() + ", " + count + "]");
     }
 
     @Override
@@ -281,7 +281,7 @@ public class EventLogger implements ExoPlayer.EventListener,
 
     @Override
     public void onDrmKeysLoaded() {
-        Log.d(TAG, "drmKeysLoaded [" + getSessionTimeString() + "]");
+        Timber.d("drmKeysLoaded [" + getSessionTimeString() + "]");
     }
 
     // ExtractorMediaSource.EventListener
@@ -336,7 +336,7 @@ public class EventLogger implements ExoPlayer.EventListener,
     // Internal methods
 
     private void printInternalError(String type, Exception e) {
-        Log.e(TAG, "internalError [" + getSessionTimeString() + ", " + type + "]", e);
+        Timber.e("internalError [" + getSessionTimeString() + ", " + type + "]", e);
     }
 
     private void printMetadata(Metadata metadata, String prefix) {
@@ -344,30 +344,30 @@ public class EventLogger implements ExoPlayer.EventListener,
             Metadata.Entry entry = metadata.get(i);
             if (entry instanceof TxxxFrame) {
                 TxxxFrame txxxFrame = (TxxxFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: description=%s, value=%s", txxxFrame.id,
+                Timber.d(prefix + String.format("%s: description=%s, value=%s", txxxFrame.id,
                         txxxFrame.description, txxxFrame.value));
             } else if (entry instanceof PrivFrame) {
                 PrivFrame privFrame = (PrivFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: owner=%s", privFrame.id, privFrame.owner));
+                Timber.d(prefix + String.format("%s: owner=%s", privFrame.id, privFrame.owner));
             } else if (entry instanceof GeobFrame) {
                 GeobFrame geobFrame = (GeobFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: mimeType=%s, filename=%s, description=%s",
+                Timber.d(prefix + String.format("%s: mimeType=%s, filename=%s, description=%s",
                         geobFrame.id, geobFrame.mimeType, geobFrame.filename, geobFrame.description));
             } else if (entry instanceof ApicFrame) {
                 ApicFrame apicFrame = (ApicFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: mimeType=%s, description=%s",
+                Timber.d(prefix + String.format("%s: mimeType=%s, description=%s",
                         apicFrame.id, apicFrame.mimeType, apicFrame.description));
             } else if (entry instanceof TextInformationFrame) {
                 TextInformationFrame textInformationFrame = (TextInformationFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: description=%s", textInformationFrame.id,
+                Timber.d(prefix + String.format("%s: description=%s", textInformationFrame.id,
                         textInformationFrame.description));
             } else if (entry instanceof CommentFrame) {
                 CommentFrame commentFrame = (CommentFrame) entry;
-                Log.d(TAG, prefix + String.format("%s: language=%s description=%s", commentFrame.id,
+                Timber.d(prefix + String.format("%s: language=%s description=%s", commentFrame.id,
                         commentFrame.language, commentFrame.description));
             } else if (entry instanceof Id3Frame) {
                 Id3Frame id3Frame = (Id3Frame) entry;
-                Log.d(TAG, prefix + String.format("%s", id3Frame.id));
+                Timber.d(prefix + String.format("%s", id3Frame.id));
             }
         }
     }

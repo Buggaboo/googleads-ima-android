@@ -229,10 +229,7 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
      * called when content is resumed after ad playback or when focus has returned to the app.
      */
     public void restorePosition() {
-
-        Log.d("VideoPlayerWithAdPl...", "restorePosition: url: " + mContentVideoUrl);
-        mVideoPlayer.setVideoPath(mContentVideoUrl); // TODO determine solvable with an Observable?
-
+        mVideoPlayer.setVideoPath(mContentVideoUrl); // This was only necessary for ExoPlayer
         if (mIsAdDisplayed) {
             mVideoPlayer.seekTo(mSavedAdPosition);
         } else {

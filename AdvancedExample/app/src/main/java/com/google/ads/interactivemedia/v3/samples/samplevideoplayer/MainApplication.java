@@ -10,9 +10,12 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 
+import timber.log.Timber;
+import static timber.log.Timber.DebugTree;
+
 /**
  * Created by jasmsison on 07/01/17.
- *
+ * <p>
  * Placeholder application to facilitate overriding Application methods for debugging and testing.
  */
 public class MainApplication extends Application {
@@ -24,10 +27,15 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new DebugTree());
+        }
+
         // TODO use BuildConfig
         userAgent = Util.getUserAgent(this, "ExoPlayerDemo");
 
-        instance  = this; // hack
+        instance = this; // hack
     }
 
     public DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
