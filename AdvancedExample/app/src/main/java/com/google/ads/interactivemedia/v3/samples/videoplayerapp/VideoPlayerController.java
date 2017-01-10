@@ -142,6 +142,12 @@ public class VideoPlayerController {
     }
 
     public VideoPlayerController(Context context,
+                                 VideoPlayerWithAdPlayback videoPlayerWithAdPlayback,
+                                 View playPauseToggle, String language, ViewGroup companionViewGroup, Logger log) {
+        this(context, videoPlayerWithAdPlayback, null, playPauseToggle, language, companionViewGroup, log);
+    }
+
+    public VideoPlayerController(Context context,
             VideoPlayerWithAdPlayback videoPlayerWithAdPlayback, View playButton,
             View playPauseToggle, String language, ViewGroup companionViewGroup, Logger log) {
         mVideoPlayerWithAdPlayback = videoPlayerWithAdPlayback;
@@ -182,12 +188,14 @@ public class VideoPlayerController {
                 });
 
         // When Play is clicked, request ads and hide the button.
-        mPlayButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                requestAndPlayAds();
-            }
-        });
+        if (mPlayButton != null) {
+            mPlayButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    requestAndPlayAds();
+                }
+            });
+        }
     }
 
     private void log(String message) {
@@ -235,7 +243,9 @@ public class VideoPlayerController {
         }
         mAdsLoader.contentComplete();
 
-        mPlayButton.setVisibility(View.GONE);
+        if (mPlayButton != null) {
+            mPlayButton.setVisibility(View.GONE);
+        }
         mAdDisplayContainer = mSdkFactory.createAdDisplayContainer();
         mAdDisplayContainer.setPlayer(mVideoPlayerWithAdPlayback.getVideoAdPlayer());
         mAdDisplayContainer.setAdContainer(mVideoPlayerWithAdPlayback.getAdUiContainer());

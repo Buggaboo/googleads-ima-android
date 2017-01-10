@@ -74,7 +74,7 @@ public class VideoFragment extends Fragment {
     private void initUi(View rootView) {
         VideoPlayerWithAdPlayback mVideoPlayerWithAdPlayback = (VideoPlayerWithAdPlayback)
                 rootView.findViewById(R.id.videoPlayerWithAdPlayback);
-        View playButton = rootView.findViewById(R.id.playButton);
+        //View playButton = rootView.findViewById(R.id.playButton);
         View playPauseToggle = rootView.findViewById(R.id.videoContainer);
         ViewGroup companionAdSlot = (ViewGroup) rootView.findViewById(R.id.companionAdSlot);
         mVideoTitle = (TextView) rootView.findViewById(R.id.video_title);
@@ -103,7 +103,7 @@ public class VideoFragment extends Fragment {
         };
 
         mVideoPlayerController = new VideoPlayerController(this.getActivity(),
-                mVideoPlayerWithAdPlayback, playButton, playPauseToggle,
+                mVideoPlayerWithAdPlayback, /*playButton,*/ playPauseToggle,
                 getString(R.string.ad_ui_lang), companionAdSlot, logger);
 
         // If we've already selected a video, load it now.

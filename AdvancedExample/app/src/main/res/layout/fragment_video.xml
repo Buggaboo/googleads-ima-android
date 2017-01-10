@@ -46,6 +46,7 @@
                 android:id="@+id/adUiContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
+            <!--
             <ImageButton
                 android:id="@+id/playButton"
                 android:contentDescription="Play Button"
@@ -53,6 +54,7 @@
                 android:layout_height="match_parent"
                 android:src="@drawable/ic_action_play_over_video"
                 android:background="@null" />
+            -->
         </com.google.ads.interactivemedia.v3.samples.videoplayerapp.VideoPlayerWithAdPlayback>
     </LinearLayout>
 
