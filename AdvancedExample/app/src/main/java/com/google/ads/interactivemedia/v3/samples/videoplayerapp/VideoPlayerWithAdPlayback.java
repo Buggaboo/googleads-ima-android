@@ -12,6 +12,7 @@ import android.widget.RelativeLayout;
 import com.google.ads.interactivemedia.v3.api.player.ContentProgressProvider;
 import com.google.ads.interactivemedia.v3.api.player.VideoAdPlayer;
 import com.google.ads.interactivemedia.v3.api.player.VideoProgressUpdate;
+import static com.google.ads.interactivemedia.v3.samples.exo.Util.Preferences.*;
 import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
 
 import java.util.ArrayList;
@@ -21,6 +22,11 @@ import java.util.List;
  * Video player that can play content video and ads.
  */
 public class VideoPlayerWithAdPlayback extends RelativeLayout {
+
+    public static final String VPAP_IS_AD_DISPLAYED_KEY = "VPAP.mIsAdDisplayed";
+    public static final String VPAP_CONTENT_VIDEO_URL_KEY = "VPAP.mContentVideoUrl";
+    public static final String VPAP_SAVED_AD_POSITION_KEY = "VPAP.mSavedAdPosition";
+    public static final String VPAP_SAVED_CONTENT_POSITION_KEY = "VPAP.mSavedContentPosition";
 
     /** Interface for alerting caller of video completion. */
     public interface OnContentCompleteListener {
@@ -217,6 +223,12 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
      * is paused to prepare for ad playback or when app is backgrounded.
      */
     public void savePosition() {
+        // persistence without onSavedInstanceState or onRestore...
+        writeBool(VPAP_IS_AD_DISPLAYED_KEY, mIsAdDisplayed);
+        writeString(VPAP_CONTENT_VIDEO_URL_KEY, mContentVideoUrl);
+        writeInt(VPAP_SAVED_AD_POSITION_KEY, mSavedAdPosition);
+        readInt(VPAP_SAVED_CONTENT_POSITION_KEY, mSavedContentPosition);
+
         if (mIsAdDisplayed) {
             mSavedAdPosition = mVideoPlayer.getCurrentPosition();
         } else {
@@ -229,6 +241,12 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
      * called when content is resumed after ad playback or when focus has returned to the app.
      */
     public void restorePosition() {
+        // persistence without onSavedInstanceState or onRestore...
+        mIsAdDisplayed = readBool(VPAP_IS_AD_DISPLAYED_KEY, false);
+        mContentVideoUrl = readString(VPAP_CONTENT_VIDEO_URL_KEY, "");
+        mSavedAdPosition = readInt(VPAP_SAVED_AD_POSITION_KEY, 0);
+        mSavedContentPosition = readInt(VPAP_SAVED_CONTENT_POSITION_KEY, 0);
+
         mVideoPlayer.setVideoPath(mContentVideoUrl); // This was only necessary for ExoPlayer
         if (mIsAdDisplayed) {
             mVideoPlayer.seekTo(mSavedAdPosition);

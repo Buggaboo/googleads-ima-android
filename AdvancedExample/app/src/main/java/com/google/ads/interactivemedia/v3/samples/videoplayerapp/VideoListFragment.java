@@ -2,6 +2,7 @@ package com.google.ads.interactivemedia.v3.samples.videoplayerapp;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -43,7 +44,7 @@ public class VideoListFragment extends Fragment {
     }
 
     @Override
-    public void onAttach(Activity activity) {
+    public void onAttach(Context activity) {
         super.onAttach(activity);
         try {
             mSelectedCallback = (OnVideoSelectedListener) activity;
