@@ -18,6 +18,8 @@ import com.google.ads.interactivemedia.v3.samples.samplevideoplayer.VideoPlayer;
 import java.util.ArrayList;
 import java.util.List;
 
+import timber.log.Timber;
+
 /**
  * Video player that can play content video and ads.
  */
@@ -229,6 +231,10 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
         writeInt(VPAP_SAVED_AD_POSITION_KEY, mSavedAdPosition);
         readInt(VPAP_SAVED_CONTENT_POSITION_KEY, mSavedContentPosition);
 
+        Timber.d("savePosition: mIsAdDisplayed %s,\nmContentVideoUrl %s\nmSavedAdPosition %s\nmSavedContentPosition %s",
+                String.valueOf(mIsAdDisplayed), mContentVideoUrl,
+                String.valueOf(mSavedAdPosition), String.valueOf(mSavedContentPosition));
+
         if (mIsAdDisplayed) {
             mSavedAdPosition = mVideoPlayer.getCurrentPosition();
         } else {
@@ -246,6 +252,10 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
         mContentVideoUrl = readString(VPAP_CONTENT_VIDEO_URL_KEY, "");
         mSavedAdPosition = readInt(VPAP_SAVED_AD_POSITION_KEY, 0);
         mSavedContentPosition = readInt(VPAP_SAVED_CONTENT_POSITION_KEY, 0);
+
+        Timber.d("restorePosition: mIsAdDisplayed %s,\nmContentVideoUrl %s\nmSavedAdPosition %s\nmSavedContentPosition %s",
+                String.valueOf(mIsAdDisplayed), mContentVideoUrl,
+                String.valueOf(mSavedAdPosition), String.valueOf(mSavedContentPosition));
 
         mVideoPlayer.setVideoPath(mContentVideoUrl); // This was only necessary for ExoPlayer
         if (mIsAdDisplayed) {

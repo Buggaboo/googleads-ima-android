@@ -109,8 +109,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     public static final String URI_LIST_EXTRA = "uri_list";
     public static final String EXTENSION_LIST_EXTRA = "extension_list";
 
-    // TODO persist
-    private static Bundle sArgs = null;
+    private Bundle sArgs = null;
 
     // builder params
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
@@ -203,7 +202,8 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
     @Override
     public void setVideoPath(String videoUrl) {
         if (sArgs != null) {
-            releasePlayer();
+            stopPlayback();
+            sArgs = null;
         }
         initializePlayer(videoUrl);
     }
