@@ -6,6 +6,7 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
@@ -88,8 +89,10 @@ public class VideoPlayerWithAdPlayback extends RelativeLayout {
         mIsAdDisplayed = false;
         mSavedAdPosition = 0;
         mSavedContentPosition = 0;
-        mVideoPlayer = (VideoPlayer) this.getRootView().findViewById(R.id.videoPlayer);
-        mAdUiContainer = (ViewGroup) this.getRootView().findViewById(R.id.adUiContainer);
+
+        View rootView = getRootView();
+        mVideoPlayer = (VideoPlayer) rootView.findViewById(R.id.videoPlayer);
+        mAdUiContainer = (ViewGroup) rootView.findViewById(R.id.adUiContainer);
 
         // Define VideoAdPlayer connector.
         mVideoAdPlayer = new VideoAdPlayer() {

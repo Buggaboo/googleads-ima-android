@@ -233,6 +233,26 @@ public class VideoPlayerController {
     public void requestAndPlayAds() {
         if (TextUtils.isEmpty(mCurrentAdTagUrl)) {
             log("No VAST ad tag URL specified");
+
+            // TODO - determine 1. there is an AdTagUrl in persistence (SharedPreference)
+            // TODO - determine 2. the AdTagUrl is struck from persistence, when the ad is finished
+
+            // TODO In the new version of this code, the whole JSON will be persisted
+            // TODO and only the progress (of both Ad and Content) and boolean isAdPlaying will be persisted
+            // TODO call this new object, VideoState (Parcelable)
+
+            // In any case:
+            // 1. The app enters the video play state via #resumeContent below
+            // and starts the content from the last known point (most likely currentPosition == 0)
+            // 2. The app enters the video play state from onResume from the fragment
+            // and starts the content from the last known point via #resume (which is called from)
+            // the fragment's onResume
+
+            // So the working hypothesis is mCurrentAdTagUrl is not persisted
+            // so the whole code block below here fails.
+            // What we see is #resumeContent being run, not #resume
+            // which can differentiate between ad and content
+
             resumeContent();
             return;
         }
