@@ -201,10 +201,7 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
 
     @Override
     public void setVideoPath(String videoUrl) {
-        if (sArgs != null) {
-            stopPlayback();
-            sArgs = null;
-        }
+        stopPlayback();
         initializePlayer(videoUrl);
     }
 
@@ -327,9 +324,6 @@ public class ExoVideoPlayer extends FrameLayout implements VideoPlayer, View.OnC
         }
         sArgs = args;
         Set<String> bundleKeySet = args.keySet();
-
-        // TODO remove debug, reasoning
-        if (player != null) throw new IllegalArgumentException();
 
         if (player == null) {
             boolean preferExtensionDecoders = args.getBoolean(PREFER_EXTENSION_DECODERS, false);
